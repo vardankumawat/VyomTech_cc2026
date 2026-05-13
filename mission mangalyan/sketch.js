@@ -1,4 +1,4 @@
-let phase = "earth";
+/*let phase = "earth";
 let angle = 0;
 let spiralRadius = 40;
 let spiralTurns = 2;
@@ -177,4 +177,262 @@ textSize(26);
 text("Mars Orbiter Mission Successful", width / 2, 50);
   textSize(16)
 textAlign(LEFT);
+}*/
+let rocketY = 500;
+let velocity = 0;
+
+let state = "idle";
+let countdown = 3;
+let lastCountTime = 0;
+
+let particles = [];
+let beepSound; 
+
+//sound
+function preload() {
+    beepSound = loadSound('beep.mp3'); 
+}
+
+function setup() {
+    createCanvas(800, 600);
+    userStartAudio(); 
+
+    // prevent overlap
+    beepSound.playMode('restart');
+}
+
+function draw() {
+    background(135, 206, 235);
+
+    drawLand();
+    drawTowers();
+    drawConnectors();
+
+    if (state === "countdown" || state === "launchText") {
+        showCountdown();
+    }
+
+    if (state === "launch") {
+        velocity += 0.05;
+        rocketY -= velocity;
+
+        generateSmoke(400, rocketY);
+        updateSmoke();
+    }
+
+    drawRocket(400, rocketY);
+    drawFlame(400, rocketY);
+}
+
+function mousePressed() {
+    if (state === "idle") {
+        state = "countdown";
+        countdown = 3;
+        lastCountTime = millis();
+    }
+}
+
+//countdown
+function showCountdown() {
+    fill(0);
+    textSize(50);
+    textAlign(LEFT, CENTER);
+
+    let x = 50;
+    let y = height - 100;
+
+    if (state === "countdown") {
+        if (countdown > 0) {
+            text(countdown, x, y);
+        }
+
+        if (millis() - lastCountTime > 1000) {
+
+            //play sound
+            if (countdown > 0 && beepSound) {
+                beepSound.play();
+            }
+
+            countdown--;
+            lastCountTime = millis();
+
+            if (countdown === 0) {
+                state = "launchText";
+                lastCountTime = millis();
+            }
+        }
+    } 
+    else if (state === "launchText") {
+        text("LAUNCH", x, y);
+
+        if (millis() - lastCountTime > 1000) {
+            state = "launch";
+        }
+    }
+}
+
+//smoke 
+function generateSmoke(x, y) {
+    for (let i = 0; i < 5; i++) {
+        particles.push({
+            x: x + random(-20, 20),
+            y: y + 20,
+            size: random(10, 25),
+            alpha: 200
+        });
+    }
+}
+
+function updateSmoke() {
+    noStroke();
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+
+        fill(200, p.alpha);
+        ellipse(p.x, p.y, p.size);
+
+        p.y += random(1, 3);
+        p.x += random(-1, 1);
+        p.alpha -= 3;
+
+        if (p.alpha <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
+//land 
+function drawLand() {
+    fill(100, 200, 100);
+    rect(0, 520, width, 80);
+
+    fill(120);
+    rect(350, 500, 100, 20);
+}
+
+//tower
+function drawTowers() {
+    stroke(120);
+    strokeWeight(2);
+    noFill();
+
+    drawTower(300, 250, 40, 270);
+    drawTower(460, 250, 40, 270);
+}
+
+function drawTower(x, y, w, h) {
+    push();
+    translate(x, y);
+
+    rect(0, 0, w, h);
+
+    let step = 20;
+    for (let i = 0; i < h; i += step) {
+        line(0, i, w, i + step);
+        line(w, i, 0, i + step);
+    }
+
+    pop();
+}
+
+//connectors 
+function drawConnectors() {
+    let fixedY = 500;
+
+    stroke(120);
+    strokeWeight(2);
+    noFill();
+
+    let h = 20;
+    let w = 80;
+    let segments = 6;
+
+    drawZigZag(340, fixedY - 120, w, h, segments);
+    drawZigZag(380, fixedY - 120, w, h, segments);
+}
+
+function drawZigZag(x, y, w, h, segments) {
+    push();
+    translate(x, y);
+
+    rect(0, 0, w, h);
+
+    let step = w / segments;
+
+    for (let i = 0; i < segments; i++) {
+        let x1 = i * step;
+        let x2 = (i + 1) * step;
+
+        if (i % 2 === 0) {
+            line(x1, 0, x2, h);
+        } else {
+            line(x1, h, x2, 0);
+        }
+    }
+
+    pop();
+}
+
+//Rocket
+function drawRocket(x, y) {
+    push();
+    translate(x, y);
+    rectMode(CENTER);
+    noStroke();
+
+    fill(240);
+    rect(0, -60, 40, 120);
+    rect(0, -160, 40, 80);
+
+    fill(128, 0, 0);
+    rect(0, -220, 40, 40);
+
+    fill(240);
+    rect(0, -255, 40, 30);
+
+    rect(0, -280, 40, 20);
+    triangle(-20, -290, 20, -290, 0, -340);
+
+    fill(255, 153, 51);
+    rect(0, -170, 40, 5);
+    fill(255);
+    rect(0, -165, 40, 5);
+    fill(19, 136, 8);
+    rect(0, -160, 40, 5);
+
+    fill(128, 0, 0);
+    rect(-28, -40, 16, 80);
+    triangle(-36, -80, -20, -80, -28, -95);
+    fill(80);
+    rect(-28, 5, 12, 10);
+
+    fill(128, 0, 0);
+    rect(28, -40, 16, 80);
+    triangle(20, -80, 36, -80, 28, -95);
+    fill(80);
+    rect(28, 5, 12, 10);
+
+    fill(80);
+    quad(-15, 0, 15, 0, 20, 15, -20, 15);
+
+    pop();
+}
+
+//flame 
+function drawFlame(x, y) {
+    push();
+    translate(x, y);
+    noStroke();
+
+    fill(255, 150, 0, 200);
+    triangle(-15, 15, 15, 15, random(-5, 5), random(40, 70));
+
+    fill(255, 255, 0, 200);
+    triangle(-10, 15, 10, 15, random(-3, 3), random(30, 50));
+
+    fill(255, 150, 0, 200);
+    triangle(-32, 10, -24, 10, -28 + random(-2, 2), random(25, 45));
+    triangle(24, 10, 32, 10, 28 + random(-2, 2), random(25, 45));
+
+    pop();
 }
