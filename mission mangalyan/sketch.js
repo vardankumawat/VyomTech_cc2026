@@ -178,7 +178,7 @@ text("Mars Orbiter Mission Successful", width / 2, 50);
   textSize(16)
 textAlign(LEFT);
 }*/
-let rocketY = 500;
+/*let rocketY = 500;
 let velocity = 0;
 
 let state = "idle";
@@ -435,4 +435,233 @@ function drawFlame(x, y) {
     triangle(24, 10, 32, 10, 28 + random(-2, 2), random(25, 45));
 
     pop();
+}*/
+let spaceRocketX = 450;
+let spaceRocketY = 400;
+let currentAngle = 70;
+
+// Mission stages
+let missionStage = 0;
+
+let debrisParts = [];
+
+function setup() {
+    createCanvas(900, 800);
+}
+
+function draw() {
+    drawSpacePhase();
+}
+
+//space phase 
+function drawSpacePhase() {
+
+    drawSpaceBackground();
+
+    // Debris animation
+    for (let i = debrisParts.length - 1; i >= 0; i--) {
+        debrisParts[i].update();
+        debrisParts[i].show();
+
+        if (debrisParts[i].alpha <= 0) {
+            debrisParts.splice(i, 1);
+        }
+    }
+
+    let hover = sin(frameCount * 0.05) * 5;
+
+    push();
+    translate(spaceRocketX, spaceRocketY + hover);
+    rotate(radians(currentAngle));
+
+    // Flame only before stage 2
+    if (missionStage < 2) {
+        drawFlame(0, -120);
+    }
+
+    drawRocket(0, 0, missionStage);
+
+    pop();
+
+    //Instructions
+    fill(255);
+    textAlign(CENTER);
+    textSize(18);
+
+    if (missionStage < 3) {
+        text("PRESS 1, 2, 3 FOR STAGE SEPARATION", width / 2, height - 40);
+    } else {
+        fill(0, 255, 120);
+        text("SATELLITE SUCCESSFULLY DEPLOYED", width / 2, height - 40);
+    }
+}
+
+//Key control 
+function keyPressed() {
+
+    if (key === '1' && missionStage === 0) {
+        debrisParts.push(new Debris(-70, -20, "booster"));
+        debrisParts.push(new Debris(30, -20, "booster"));
+        missionStage = 1;
+    }
+
+    if (key === '2' && missionStage === 1) {
+        debrisParts.push(new Debris(0, 15, "main"));
+        missionStage = 2;
+    }
+
+    if (key === '3' && missionStage === 2) {
+        debrisParts.push(new Debris(0, -120, "fairing"));
+        missionStage = 3;
+    }
+}
+
+//derbis class
+class Debris {
+    constructor(offX, offY, type) {
+        this.x = spaceRocketX;
+        this.y = spaceRocketY;
+        this.offX = offX;
+        this.offY = offY;
+        this.type = type;
+
+        this.vx = random(-1, 1);
+        this.vy = random(1, 3);
+        this.rot = random(-1, 1);
+
+        this.alpha = 255;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.offX += this.rot;
+        this.alpha -= 2;
+    }
+
+    show() {
+        push();
+        translate(this.x + this.offX, this.y + this.offY);
+
+        noStroke();
+        fill(230, this.alpha);
+
+        if (this.type === "booster") {
+            rect(0, 0, 20, 80);
+        } 
+        else if (this.type === "main") {
+            rect(0, 0, 40, 120);
+        } 
+        else if (this.type === "fairing") {
+            arc(0, 0, 40, 40, PI, TWO_PI);
+        }
+
+        pop();
+    }
+}
+
+//rocket
+function drawRocket(x, y, stage) {
+
+    push();
+    translate(x, y);
+    rectMode(CENTER);
+    noStroke();
+
+    //Booster
+    if (stage === 0) {
+        fill(128, 0, 0);
+        rect(-28, -40, 16, 80);
+        rect(28, -40, 16, 80);
+    }
+
+    // Main body
+    if (stage <= 1) {
+        fill(240);
+        rect(0, -60, 40, 120);
+        rect(0, -160, 40, 80);
+    }
+
+    // Upper stage
+    if (stage <= 2) {
+        fill(128, 0, 0);
+        rect(0, -220, 40, 40);
+
+        fill(240);
+        rect(0, -255, 40, 30);
+        triangle(-20, -280, 20, -280, 0, -320);
+    }
+
+    //satellite
+    if (stage === 3) {
+
+        let satX = 0;
+        let satY = -200;
+
+        push();
+        translate(satX, satY);
+
+        scale(1.3);
+
+        fill(240, 200, 80);
+        rect(0, 0, 20, 12, 3);
+
+        fill(100, 120, 255);
+        rect(-25, 0, 20, 10);
+        rect(25, 0, 20, 10);
+
+        stroke(255, 200);
+        for (let i = -32; i <= -18; i += 4) {
+            line(i, -5, i, 5);
+        }
+        for (let i = 18; i <= 32; i += 4) {
+            line(i, -5, i, 5);
+        }
+        noStroke();
+
+        fill(220);
+        ellipse(0, -12, 16, 10);
+
+        fill(180);
+        ellipse(0, -12, 6, 6);
+
+        pop();
+    }
+
+    pop();
+}
+function drawFlame(x, y) {
+
+    noStroke();
+  
+    fill(255, 100, 0, 180);
+    ellipse(x, y + 100, 70, 180);
+
+    fill(255, 160, 0, 200);
+    ellipse(x, y + 70, 50, 130);
+
+   
+    fill(255, 255, 200);
+    ellipse(x, y + 40, 25, 80);
+}
+// background
+
+function drawSpaceBackground() {
+
+    background(0);
+
+    fill(255);
+    for (let i = 0; i < 100; i++) {
+        circle(random(width), random(height), random(1, 3));
+    }
+
+    // Earth glow
+    for (let i = 0; i < 200; i++) {
+        stroke(0, 150, 255, 100 - i * 0.5);
+        line(0, 600 + i, width, 600 + i);
+    }
+
+    noStroke();
+    fill(135, 206, 250);
+    rect(0, 600, width, 200);
 }
